@@ -17,7 +17,7 @@ STYLE_MODELS = {
 }
 
 def load_model(model_path):
-    transformer.load_state_dict(torch.load(model_path, map_location=device))
+    transformer.load_state_dict(torch.load(model_path, map_location=device, weights_only=True))
     transformer.eval()
 
 # Streamlit App Interface
@@ -29,7 +29,7 @@ st.sidebar.header("上传与风格设置")
 content_image_file = st.sidebar.file_uploader("上传要风格迁移的图像", type=["jpg", "jpeg", "png"])
 if content_image_file is not None:
     content_image = Image.open(content_image_file)
-    st.image(content_image, caption="上传的内容图像", use_column_width=True)
+    st.image(content_image, caption="上传的内容图像", use_container_width=True)
 
 # Select style model
 selected_style = st.sidebar.selectbox("选择风格", options=list(STYLE_MODELS.keys()))
@@ -56,7 +56,7 @@ if st.sidebar.button("开始风格迁移"):
             output_path = "stylized_output.jpg"
             save_image(stylized_image, output_path)
             result_image = Image.open(output_path)
-            st.image(result_image, caption="风格化后的图像", use_column_width=True)
+            st.image(result_image, caption="风格化后的图像", use_container_width=True)
             
             # Add save button
             if st.button("保存风格化图像"):
