@@ -6,4 +6,4 @@ av
 scikit-video
 tqdm
 ffmpeg
-cv2
+opencv
