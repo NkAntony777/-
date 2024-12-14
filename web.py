@@ -11,9 +11,9 @@ transformer = TransformerNet().to(device)
 
 # Predefined models
 STYLE_MODELS = {
-    "Cuphead": "models/cuphead_10000.pth",
-    "Starry Night": "models/starry_night_10000.pth",
-    "Mosaic": "models/mosaic_10000.pth"
+    "Cuphead": "/models/cuphead_10000.pth",
+    "Starry Night": "/models/starry_night_10000.pth",
+    "Mosaic": "/models/mosaic_10000.pth"
 }
 
 def load_model(model_path):
