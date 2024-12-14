@@ -2,3 +2,6 @@ torch
 torchvision
 pillow
 streamlit
+av
+numpy
+PIL
