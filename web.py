@@ -3,10 +3,11 @@ from PIL import Image
 import torch
 from torchvision.utils import save_image
 from models import TransformerNet
-from utils import style_transform, denormalize, extract_frames, deprocess
+from utils import style_transform, denormalize, deprocess
 import os
 import skvideo.io
 import tqdm
+import av
 
 # Load model and set device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -22,6 +23,13 @@ STYLE_MODELS = {
 def load_model(model_path):
     transformer.load_state_dict(torch.load(model_path, map_location=device, weights_only=True))
     transformer.eval()
+
+def extract_frames(video_path):
+    """ Extracts only video frames from the input video """
+    video = av.open(video_path)
+    video_stream = next(s for s in video.streams if s.type == 'video')  # Select video stream
+    for frame in video.decode(video_stream):
+        yield frame.to_image()
 
 # Streamlit App Interface
 st.title("快速风格迁移应用")
