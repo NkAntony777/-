@@ -9,11 +9,13 @@ std = np.array([0.229, 0.224, 0.225])
 
 
 def extract_frames(video_path):
-    """ Extracts frames from video """
-    frames = []
+    """ Extracts only video frames from the input video """
+    
     video = av.open(video_path)
-    for frame in video.decode(0):
+    video_stream = next(s for s in video.streams if s.type == 'video')  # Select video stream
+    for frame in video.decode(video_stream):
         yield frame.to_image()
+
 
 
 def gram_matrix(y):
