@@ -3,4 +3,4 @@ torchvision
 pillow
 streamlit
 av
-
+skvideo.io
