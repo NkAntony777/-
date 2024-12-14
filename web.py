@@ -5,11 +5,10 @@ from torchvision.utils import save_image
 from models import TransformerNet
 from utils import style_transform, denormalize, deprocess
 import os
-import skvideo.io
+import cv2
+import numpy as np
 import tqdm
 import av
-
-import ffmpeg
 
 # Load model and set device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -102,12 +101,16 @@ if st.sidebar.button("开始视频风格迁移"):
                 except Exception as e:
                     st.warning(f"跳过无法处理的帧：{e}")
 
-            # Save video
-            output_video_path = f"stylized_{video_file.name}.gif"
-            writer = skvideo.io.FFmpegWriter(output_video_path)
+            # Save video using OpenCV
+            output_video_path = f"stylized_{video_file.name}.avi"
+            frame_height, frame_width, _ = stylized_frames[0].shape
+            fourcc = cv2.VideoWriter_fourcc(*'XVID')
+            out = cv2.VideoWriter(output_video_path, fourcc, 24.0, (frame_width, frame_height))
+
             for frame in tqdm.tqdm(stylized_frames, desc="Writing to video"):
-                writer.writeFrame(frame)
-            writer.close()
+                out.write(cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))
+
+            out.release()
 
             st.video(output_video_path)
             st.success("视频风格迁移完成！")
