@@ -3,7 +3,7 @@ torchvision
 pillow
 streamlit
 av
-scikit-video
+
 tqdm
-ffmpeg
+
 opencv
