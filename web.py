@@ -58,12 +58,5 @@ if st.sidebar.button("开始风格迁移"):
             result_image = Image.open(output_path)
             st.image(result_image, caption="风格化后的图像", use_container_width=True)
             
-            # Add save button
-            if st.button("保存风格化图像"):
-                with open(output_path, "rb") as file:
-                    btn = st.download_button(
-                        label="下载风格化图像",
-                        data=file,
-                        file_name="stylized_image.jpg",
-                        mime="image/jpeg"
-                    )
+            # Add save instruction
+            st.info("长按或右键点击图片进行保存。")
