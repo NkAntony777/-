@@ -84,10 +84,13 @@ if st.sidebar.button("开始视频风格迁移"):
 
             stylized_frames = []
             for frame in tqdm.tqdm(extract_frames(video_path), desc="Processing frames"):
-                image_tensor = style_transform()(frame).unsqueeze(0).to(device)
-                with torch.no_grad():
-                    stylized_image = transformer(image_tensor)
-                stylized_frames.append(deprocess(stylized_image))
+                try:
+                    image_tensor = style_transform()(frame).unsqueeze(0).to(device)
+                    with torch.no_grad():
+                        stylized_image = transformer(image_tensor)
+                    stylized_frames.append(deprocess(stylized_image))
+                except Exception as e:
+                    st.warning(f"跳过无法处理的帧：{e}")
 
             # Save video
             output_video_path = f"stylized_{video_file.name}.gif"
