@@ -3,12 +3,11 @@ from PIL import Image
 import torch
 from torchvision.utils import save_image
 from models import TransformerNet
-from utils import style_transform, denormalize, deprocess
+from utils import style_transform, denormalize, deprocess, extract_frames, save_video
 import os
 import cv2
 import numpy as np
 import tqdm
-import av
 
 # Load model and set device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -22,15 +21,8 @@ STYLE_MODELS = {
 }
 
 def load_model(model_path):
-    transformer.load_state_dict(torch.load(model_path, map_location=device, weights_only=True))
+    transformer.load_state_dict(torch.load(model_path, map_location=device))
     transformer.eval()
-
-def extract_frames(video_path):
-    """ Extracts only video frames from the input video """
-    video = av.open(video_path)
-    video_stream = next(s for s in video.streams if s.type == 'video')  # Select video stream
-    for frame in video.decode(video_stream):
-        yield frame.to_image()
 
 # Streamlit App Interface
 st.title("快速风格迁移应用")
@@ -72,7 +64,7 @@ if st.sidebar.button("开始图像风格迁移"):
             save_image(stylized_image, output_path)
             result_image = Image.open(output_path)
             st.image(result_image, caption="风格化后的图像", use_container_width=True)
-            
+
             # Add save instruction
             st.info("长按或右键点击图片进行保存。")
 
@@ -91,26 +83,24 @@ if st.sidebar.button("开始视频风格迁移"):
             with open(video_path, "wb") as f:
                 f.write(video_file.read())
 
+            cap = cv2.VideoCapture(video_path)
+            fps = int(cap.get(cv2.CAP_PROP_FPS))
+            frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+            frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+
             stylized_frames = []
             for frame in tqdm.tqdm(extract_frames(video_path), desc="Processing frames"):
                 try:
-                    image_tensor = style_transform()(frame).unsqueeze(0).to(device)
+                    image_tensor = style_transform((frame_height, frame_width))(frame).unsqueeze(0).to(device)
                     with torch.no_grad():
                         stylized_image = transformer(image_tensor)
                     stylized_frames.append(deprocess(stylized_image))
                 except Exception as e:
                     st.warning(f"跳过无法处理的帧：{e}")
 
-            # Save video using OpenCV
-            output_video_path = f"stylized_{video_file.name}.avi"
-            frame_height, frame_width, _ = stylized_frames[0].shape
-            fourcc = cv2.VideoWriter_fourcc(*'XVID')
-            out = cv2.VideoWriter(output_video_path, fourcc, 24.0, (frame_width, frame_height))
-
-            for frame in tqdm.tqdm(stylized_frames, desc="Writing to video"):
-                out.write(cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))
-
-            out.release()
+            # Save video using the utility function
+            output_video_path = f"stylized_{video_file.name}.mp4"
+            save_video(stylized_frames, output_video_path, fps, (frame_width, frame_height))
 
             st.video(output_video_path)
             st.success("视频风格迁移完成！")
