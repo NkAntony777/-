@@ -9,6 +9,13 @@ from utils import style_transform, denormalize
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 transformer = TransformerNet().to(device)
 
+# Predefined models
+STYLE_MODELS = {
+    "Cuphead": "models/cuphead_10000.pth",
+    "Starry Night": "models/starry_night_10000.pth",
+    "Mosaic": "models/mosaic_10000.pth"
+}
+
 def load_model(model_path):
     transformer.load_state_dict(torch.load(model_path, map_location=device))
     transformer.eval()
@@ -24,20 +31,19 @@ if content_image_file is not None:
     content_image = Image.open(content_image_file)
     st.image(content_image, caption="Uploaded Content Image", use_column_width=True)
 
-# Upload style model
-style_model_file = st.sidebar.file_uploader("Upload Style Model (.pth)", type=["pth"])
-if style_model_file is not None:
-    load_model(style_model_file)
-    st.sidebar.success("Style model loaded successfully")
+# Select style model
+selected_style = st.sidebar.selectbox("Select Style", options=list(STYLE_MODELS.keys()))
 
 # Apply Style Transfer
 if st.sidebar.button("Apply Style"):
     if content_image_file is None:
         st.sidebar.error("Please upload a content image.")
-    elif style_model_file is None:
-        st.sidebar.error("Please upload a style model.")
     else:
         with st.spinner("Applying style..."):
+            # Load the selected style model
+            model_path = STYLE_MODELS[selected_style]
+            load_model(model_path)
+
             # Transform content image
             transform = style_transform()
             content_tensor = transform(content_image).unsqueeze(0).to(device)
