@@ -4,3 +4,4 @@ pillow
 streamlit
 av
 scikit-video
+tqdm
