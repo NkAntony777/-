@@ -3,7 +3,10 @@ from PIL import Image
 import torch
 from torchvision.utils import save_image
 from models import TransformerNet
-from utils import style_transform, denormalize
+from utils import style_transform, denormalize, extract_frames, deprocess
+import os
+import skvideo.io
+import tqdm
 
 # Load model and set device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -31,11 +34,14 @@ if content_image_file is not None:
     content_image = Image.open(content_image_file)
     st.image(content_image, caption="上传的内容图像", use_container_width=True)
 
+# Upload video
+video_file = st.sidebar.file_uploader("上传要风格迁移的视频", type=["mp4", "avi", "mov"])
+
 # Select style model
 selected_style = st.sidebar.selectbox("选择风格", options=list(STYLE_MODELS.keys()))
 
-# Apply Style Transfer
-if st.sidebar.button("开始风格迁移"):
+# Apply Style Transfer to Image
+if st.sidebar.button("开始图像风格迁移"):
     if content_image_file is None:
         st.sidebar.error("请上传内容图片")
     else:
@@ -60,3 +66,35 @@ if st.sidebar.button("开始风格迁移"):
             
             # Add save instruction
             st.info("长按或右键点击图片进行保存。")
+
+# Apply Style Transfer to Video
+if st.sidebar.button("开始视频风格迁移"):
+    if video_file is None:
+        st.sidebar.error("请上传视频文件")
+    else:
+        with st.spinner("正在处理视频..."):
+            # Load the selected style model
+            model_path = STYLE_MODELS[selected_style]
+            load_model(model_path)
+
+            # Process video
+            video_path = f"uploaded_{video_file.name}"
+            with open(video_path, "wb") as f:
+                f.write(video_file.read())
+
+            stylized_frames = []
+            for frame in tqdm.tqdm(extract_frames(video_path), desc="Processing frames"):
+                image_tensor = style_transform()(frame).unsqueeze(0).to(device)
+                with torch.no_grad():
+                    stylized_image = transformer(image_tensor)
+                stylized_frames.append(deprocess(stylized_image))
+
+            # Save video
+            output_video_path = f"stylized_{video_file.name}.gif"
+            writer = skvideo.io.FFmpegWriter(output_video_path)
+            for frame in tqdm.tqdm(stylized_frames, desc="Writing to video"):
+                writer.writeFrame(frame)
+            writer.close()
+
+            st.video(output_video_path)
+            st.success("视频风格迁移完成！")
