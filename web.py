@@ -8,6 +8,7 @@ import os
 import cv2
 import numpy as np
 import tqdm
+import qrcode  # 用于生成二维码
 
 # Load model and set device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -102,5 +103,13 @@ if st.sidebar.button("开始视频风格迁移"):
             output_video_path = f"stylized_{video_file.name}.mp4"
             save_video(stylized_frames, output_video_path, fps, (frame_width, frame_height))
 
-            st.video(output_video_path)
             st.success("视频风格迁移完成！")
+
+            # Display video
+            st.video(output_video_path)
+
+            # Generate QR code to view the video
+            video_url = os.path.abspath(output_video_path)  # Or provide a link to the hosted video
+            st.write("扫描二维码查看风格化的视频：")
+            qr = qrcode.make(video_url)  # Create QR code with the video URL
+            st.image(qr, caption="扫码观看风格化视频", use_container_width=True)
